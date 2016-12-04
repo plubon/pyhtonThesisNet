@@ -14,7 +14,7 @@ class datahelper:
         self.path = path
         labelsfile = open(path+os.sep+"labels", 'r')
         for line in labelsfile:
-            tokens = line.split(sep=";")
+            tokens = line.split(";")
             if int(tokens[1]) == 0:
                 self.men.append(tokens[0])
             else:
@@ -43,6 +43,19 @@ class datahelper:
                 frames.append(np.delete(image, 2, axis=2))
             arrays.append(np.concatenate(frames, 2))
         return batch(np.stack(arrays, 0), labels)
+
+
+    def getsingledata(self):
+        arrays=[]
+        labels=[]
+        frames = []
+        labels.append([1, 0])
+        for idx in range(1,26):
+            image = misc.imread(self.path+os.sep+str(idx).zfill(3)+".jpg")
+            frames.append(np.delete(image, 2, axis=2))
+        arrays.append(np.concatenate(frames, 2))
+        return batch(np.stack(arrays, 0), labels)
+            
 
     def gettestdata(self):
         arrays = []

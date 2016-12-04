@@ -35,8 +35,8 @@ class dense:
         if self.reshape:
             data = tf.reshape(data, [-1, self.inputsize])
         computed = helpers.relu(tf.matmul(data, self.weights) + self.biases)
-        if self.dropout > 0:
-            computed = helpers.dropout(computed, self.dropout)
+        #if self.dropout > 0:
+        computed = helpers.dropout(computed, self.dropout)
         return computed
 
 class softmax:
