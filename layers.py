@@ -47,4 +47,4 @@ class softmax:
         self.biases = helpers.bias_variable([noofclasses])
 
     def result(self, data):
-        return tf.matmul(data, self.weights) + self.biases
+        return tf.nn.softmax(tf.matmul(data, self.weights) + self.biases)
