@@ -2,83 +2,141 @@ import os
 import math
 import numpy as np
 from scipy import misc
+from scipy import ndimage
 import random
 
 class datahelper:
 
-    testProportion = 0.8
+    testProportion = 0.9
 
     def __init__(self, path):
         self.women = []
         self.men = []
-        self.path = path
-        labelsfile = open(path+os.sep+"labels", 'r')
+        self.womenTest = []
+        self.menTest = []
+        labelsfile = open(path + os.sep + "labels1", 'r')
         for line in labelsfile:
             tokens = line.split(";")
-            if int(tokens[1]) == 0:
-                self.men.append(tokens[0])
-            else:
-                self.women.append(tokens[0])
-        self.womenTestIndex = math.ceil(len(self.women)*datahelper.testProportion)
-        self.menTestIndex = math.ceil(len(self.men) * datahelper.testProportion)
+            dirc = path+os.sep+tokens[0]
+            frame_count = len([name for name in os.listdir(dirc) if os.path.isfile(os.path.join(dirc, name))])
+            print(frame_count)
+            i = 0
+            while (i + 25) < frame_count:
+                frames = []
+                for j in range(i, i+25):
+                    image = misc.imread(path + os.sep + tokens[0] + os.sep + str(j).zfill(3) + ".jpg")
+                    sums = image.sum(axis=0).sum(axis=0)
+                    if sums[2] > sums[0] or sums[2] > sums[1]:
+                        raise Exception("Something wrong with channels")
+                    '''for x in range(60):
+                        for y in range(40):
+                            for z in range(2):
+                                image[x, y, z] = (image[x, y, z] - 128) / 128.'''
+                    image = np.delete(image, 2, axis=2)
+                    frames.append(image)
+                if int(tokens[1]) == 0:
+                    self.men.append(sample(frames, [1, 0]))
+                elif int(tokens[1]) == 1:
+                    self.women.append(sample(frames, [0, 1]))
+                else:
+                    raise Exception("Wrong label")
+                i += 5
+            dirc = path + os.sep + tokens[0]+"_1"
+            frame_count = len([name for name in os.listdir(dirc) if os.path.isfile(os.path.join(dirc, name))])
+            i = 0
+            while (i + 25) < frame_count:
+                frames = []
+                for j in range(i, i + 25):
+                    image = misc.imread(path + os.sep + tokens[0] + '_1' + os.sep + str(j).zfill(3) + ".jpg")
+                    sums = image.sum(axis=0).sum(axis=0)
+                    if sums[2] > sums[0] or sums[2] > sums[1]:
+                        raise Exception("Something wrong with channels")
+                    '''for x in range(60):
+                        for y in range(40):
+                            for z in range(2):
+                                image[x, y, z] = (image[x, y, z] - 128) / 128.'''
+                    image = np.delete(image, 2, axis=2)
+                    frames.append(image)
+                if int(tokens[1]) == 0:
+                    self.men.append(sample(frames, [1, 0]))
+                elif int(tokens[1]) == 1:
+                    self.women.append(sample(frames, [0, 1]))
+                else:
+                    raise Exception("Wrong label")
+                i += 5
+        self.womenTest = self.women[int(math.ceil(len(self.women)*self.testProportion)):]
+        self.women = self.women[:int(math.floor(len(self.women)*self.testProportion))]
+        self.menTest = self.men[int(math.ceil(len(self.men) * self.testProportion)):]
+        self.men = self.men[:int(math.floor(len(self.men) * self.testProportion))]
+        self.proportion = len(self.men) / float(len(self.women) + len(self.men))
+        print("Proportion: " + str(self.proportion))
+        print("No of men samples: " + str(len(self.men)))
+        print("No of men test samples: " + str(len(self.menTest)))
+        print("No of women samples: " + str(len(self.women)))
+        print("No of women test samples: " + str(len(self.womenTest)))
+        print(self.women[0].label)
+        print(self.womenTest[0].label)
+        print(self.men[0].label)
+        print(self.menTest[0].label)
+
+    def get_label(self, val):
+        if int(val) == 1:
+            return [0, 1]
+        elif int(val) == 0:
+            return [1, 0]
+        else:
+            raise Exception("Wrong label")
+
 
     def getnextbatch(self, size):
-        proportion = len(self.men) / (len(self.women) + len(self.men))
-        menIndices = random.sample(range(0,  self.menTestIndex), math.ceil(proportion * size))
-        womenIndices = random.sample(range(0, self.womenTestIndex), math.floor((1 - proportion) * size))
+        men_indices = random.sample(range(len(self.men)), int(math.ceil(self.proportion * size)))
+        women_indices = random.sample(range(len(self.women)), int(math.floor((1 - self.proportion) * size)))
+        listsum = []
         arrays = []
         labels = []
-        for idx in menIndices:
-            frames = []
-            labels.append([1, 0])
-            for i in range(0, 25):
-                image = misc.imread(self.path+os.sep+self.men[idx]+os.sep+str(i).zfill(3)+".jpg")
-                frames.append(np.delete(image, 2, axis=2))
-            arrays.append(np.concatenate(frames, 2))
-        for idx in womenIndices:
-            frames = []
-            labels.append([0, 1])
-            for i in range(0, 25):
-                image = misc.imread(self.path + os.sep + self.men[idx] + os.sep + str(i).zfill(3) + ".jpg")
-                frames.append(np.delete(image, 2, axis=2))
-            arrays.append(np.concatenate(frames, 2))
+        for idx in men_indices:
+            listsum.append(self.men[idx])
+        for idx in women_indices:
+            listsum.append(self.women[idx])
+        random.shuffle(listsum)
+        for item in listsum:
+            arrays.append(item.img)
+            labels.append(item.label)
         return batch(np.stack(arrays, 0), labels)
 
-
     def getsingledata(self):
-        arrays=[]
-        labels=[]
-        frames = []
-        labels.append([1, 0])
-        for idx in range(1,26):
-            image = misc.imread(self.path+os.sep+str(idx).zfill(3)+".jpg")
-            frames.append(np.delete(image, 2, axis=2))
-        arrays.append(np.concatenate(frames, 2))
+        arrays = [self.men[0].img]
+        labels = [self.men[0].label]
         return batch(np.stack(arrays, 0), labels)
             
 
     def gettestdata(self):
         arrays = []
         labels = []
-        for idx in range(self.menTestIndex, len(self.men)):
-            frames = []
-            labels.append([1, 0])
-            for i in range(0, 25):
-                image = misc.imread(self.path + os.sep + self.men[idx] + os.sep + str(i).zfill(3) + ".jpg")
-                frames.append(np.delete(image, 2, axis=2))
-            arrays.append(np.concatenate(frames, 2))
-        for idx in range(self.womenTestIndex, len(self.women)):
-            frames = []
-            labels.append([0, 1])
-            for i in range(0, 25):
-                image = misc.imread(self.path + os.sep + self.men[idx] + os.sep + str(i).zfill(3) + ".jpg")
-                frames.append(np.delete(image, 2, axis=2))
-            arrays.append(np.concatenate(frames, 2))
+        listsum = self.menTest + self.womenTest
+        random.shuffle(listsum)
+        for item in listsum:
+            arrays.append(item.img)
+            labels.append(item.label)
         return batch(np.stack(arrays, 0), labels)
+        '''
+        for idx in range(len(self.menTest)):
+            labels.append([1, 0])
+            arrays.append(self.menTest[idx].img)
+        for idx in range(len(self.womenTest)):
+            labels.append([0, 1])
+            arrays.append(self.womenTest[idx].img)
+        return batch(np.stack(arrays, 0), labels)
+        '''
+
+
+class sample:
+    def __init__(self, img, label):
+        self.img = np.concatenate(img, 2)
+        self.label = label
 
 
 class batch:
-
     def __init__(self, data, labels):
         self.data = data
         self.labels = labels

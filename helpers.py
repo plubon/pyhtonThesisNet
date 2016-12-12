@@ -1,12 +1,22 @@
 import tensorflow as tf
+import uuid
 
+cnt = 0
 
 def convolve(x, w, strides):
     return tf.nn.conv2d(x, w, strides=[1, 1, 1, 1], padding='VALID')
 
 
+def weight_variable_conv(shape):
+    return tf.get_variable("W"+str(uuid.uuid4()), shape=shape,
+           initializer=tf.contrib.layers.xavier_initializer_conv2d())
+
+def weight_variable_xavier(shape):
+    return tf.get_variable("W"+str(uuid.uuid4()), shape=shape,
+                           initializer=tf.contrib.layers.xavier_initializer())
+
 def weight_variable(shape):
-    initial = tf.truncated_normal(shape, stddev=0.01)
+    initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial)
 
 

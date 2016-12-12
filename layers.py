@@ -4,7 +4,7 @@ import tensorflow as tf
 class conv:
 
     def __init__(self, filtersize, nooffilters, channels, stride):
-        self.weights = helpers.weight_variable([filtersize, filtersize, channels, nooffilters])
+        self.weights = helpers.weight_variable_conv([filtersize, filtersize, channels, nooffilters])
         self.biases = helpers.bias_variable([nooffilters])
         self.strides = 4 * [stride]
 
@@ -23,9 +23,9 @@ class maxPool:
 
 class dense:
 
-    def __init__(self, inputsize, noofnuerons, dropout_rate, reshape_needed=False):
+    def __init__(self, inputsize, noofnuerons, dropout_rate=1, reshape_needed=False):
         self.inputsize = inputsize
-        self.weights = helpers.weight_variable([inputsize, noofnuerons])
+        self.weights = helpers.weight_variable_xavier([inputsize, noofnuerons])
         self.biases = helpers.bias_variable([noofnuerons])
         self.reshape = reshape_needed
         self.dropout = dropout_rate
