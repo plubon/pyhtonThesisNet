@@ -29,9 +29,9 @@ def max_pool(x, size):
     return tf.nn.max_pool(x, ksize=[1, size, size, 1], strides=[1, size, size, 1], padding='VALID')
 
 
-def relu(feats):
-    return tf.nn.relu(feats)
+def relu(feats, name=None):
+    return tf.nn.relu(feats, name=name)
 
 
-def dropout(x, probs):
-    return tf.nn.dropout(x, probs)
+def dropout(x, probs, name=None):
+    return tf.nn.dropout(x, probs, name)

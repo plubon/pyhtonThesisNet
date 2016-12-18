@@ -31,12 +31,12 @@ class dense:
         self.dropout = dropout_rate
         #self.dropoutTensor = tf.constant([1.0-dropout_rate] * noofnuerons)
 
-    def result(self, data):
+    def result(self, data, name = None):
         if self.reshape:
             data = tf.reshape(data, [-1, self.inputsize])
         computed = helpers.relu(tf.matmul(data, self.weights) + self.biases)
         #if self.dropout > 0:
-        computed = helpers.dropout(computed, self.dropout)
+        computed = helpers.dropout(computed, self.dropout, name=name)
         return computed
 
 class softmax:
