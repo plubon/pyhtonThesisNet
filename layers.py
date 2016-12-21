@@ -23,20 +23,21 @@ class maxPool:
 
 class dense:
 
-    def __init__(self, inputsize, noofnuerons, dropout_rate=1, reshape_needed=False):
+    def __init__(self, inputsize, noofnuerons, dropout_rate=1, reshape_needed=False, name=None):
         self.inputsize = inputsize
         self.weights = helpers.weight_variable_xavier([inputsize, noofnuerons])
         self.biases = helpers.bias_variable([noofnuerons])
         self.reshape = reshape_needed
         self.dropout = dropout_rate
+        self.name = name
         #self.dropoutTensor = tf.constant([1.0-dropout_rate] * noofnuerons)
 
-    def result(self, data, name = None):
+    def result(self, data):
         if self.reshape:
             data = tf.reshape(data, [-1, self.inputsize])
         computed = helpers.relu(tf.matmul(data, self.weights) + self.biases)
         #if self.dropout > 0:
-        computed = helpers.dropout(computed, self.dropout, name=name)
+        computed = helpers.dropout(computed, self.dropout, name=self.name)
         return computed
 
 class softmax:

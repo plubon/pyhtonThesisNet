@@ -118,7 +118,12 @@ class datahelper:
         for item in listsum:
             arrays.append(item.img)
             labels.append(item.label)
-        return batch(np.stack(arrays, 0), labels)
+        subarrays = [arrays[x:x + 100] for x in xrange(0, len(arrays), 100)]
+        sublabels = [labels[x:x+100] for x in xrange(0, len(labels), 100)]
+        ret = []
+        for i in range(len(subarrays)):
+            ret.append(batch(np.stack(subarrays[i], 0), sublabels[i]))
+        return ret
         '''
         for idx in range(len(self.menTest)):
             labels.append([1, 0])
