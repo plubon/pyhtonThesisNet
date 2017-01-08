@@ -24,14 +24,10 @@ class datahelper:
             while (i + 25) < frame_count:
                 frames = []
                 for j in range(i, i+25):
-                    image = misc.imread(path + os.sep + tokens[0] + os.sep + str(j).zfill(3) + ".jpg")
+                    image = misc.imread(path + os.sep + tokens[0] + os.sep + str(j).zfill(3) + ".png")
                     sums = image.sum(axis=0).sum(axis=0)
                     if sums[2] > sums[0] or sums[2] > sums[1]:
                         raise Exception("Something wrong with channels")
-                    '''for x in range(60):
-                        for y in range(40):
-                            for z in range(2):
-                                image[x, y, z] = (image[x, y, z] - 128) / 128.'''
                     image = np.delete(image, 2, axis=2)
                     frames.append(image)
                 if int(tokens[1]) == 0:
@@ -47,14 +43,10 @@ class datahelper:
             while (i + 25) < frame_count:
                 frames = []
                 for j in range(i, i + 25):
-                    image = misc.imread(path + os.sep + tokens[0] + '_1' + os.sep + str(j).zfill(3) + ".jpg")
+                    image = misc.imread(path + os.sep + tokens[0] + '_1' + os.sep + str(j).zfill(3) + ".png")
                     sums = image.sum(axis=0).sum(axis=0)
                     if sums[2] > sums[0] or sums[2] > sums[1]:
                         raise Exception("Something wrong with channels")
-                    '''for x in range(60):
-                        for y in range(40):
-                            for z in range(2):
-                                image[x, y, z] = (image[x, y, z] - 128) / 128.'''
                     image = np.delete(image, 2, axis=2)
                     frames.append(image)
                 if int(tokens[1]) == 0:
@@ -124,15 +116,6 @@ class datahelper:
         for i in range(len(subarrays)):
             ret.append(batch(np.stack(subarrays[i], 0), sublabels[i]))
         return ret
-        '''
-        for idx in range(len(self.menTest)):
-            labels.append([1, 0])
-            arrays.append(self.menTest[idx].img)
-        for idx in range(len(self.womenTest)):
-            labels.append([0, 1])
-            arrays.append(self.womenTest[idx].img)
-        return batch(np.stack(arrays, 0), labels)
-        '''
 
 
 class sample:

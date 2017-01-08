@@ -15,8 +15,8 @@ class network:
         self.decay_steps = 10000
         self.learning_rate = tf.train.polynomial_decay(self.starter_learning_rate, self.global_step, self.decay_steps, self.end_learning_rate, power=0.5)
         global_step = tf.Variable(0, trainable=False)'''
-        boundaries = [2000, 5000, 7000, 9000]
-        values = [0.004, 0.0004, 0.00004, 0.000004, 0.0000004]
+        boundaries = [2000, 4000, 6000, 8000]
+        values = [0.004, 0.003, 0.002, 0.001, 0.001]
         self.learning_rate = tf.train.piecewise_constant(self.global_step, boundaries, values)
         self.dropoutRate = tf.placeholder(tf.float32, name="DropoutRate")
         self.session = None
@@ -45,12 +45,12 @@ class network:
         self.finalResult = self.results[len(self.results) - 1]
         self.reallyFinalResult = tf.identity(self.finalResult, name="finalesResult")
         print(self.reallyFinalResult.get_shape())
-        self.labels = tf.placeholder(tf.float32, [None, 2])
+        self.labels = tf.placeholder(tf.float32, [None, 2], name="Labels")
         self.crossEntropy = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(self.finalResult, self.labels))
-        self.train_step = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(self.crossEntropy, global_step=self.global_step)
+        self.train_step = tf.train.AdamOptimizer(epsilon=0.001).minimize(self.crossEntropy, global_step=self.global_step)
         self.correct_prediction = tf.equal(tf.argmax(self.finalResult, 1), tf.argmax(self.labels, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
+        self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32), name="Accuracy")
         self.saver = None
 
     def test(self, path):
@@ -65,18 +65,28 @@ class network:
         print("finshed, output %g", res)
 
     def train(self, path, epochs, batchsize):
+        counter = 0
+        maxAcc = 0.
         saver = tf.train.Saver()
         self.session = tf.InteractiveSession()
         self.session.run(tf.global_variables_initializer())
         self.dataHelper = datahelper(path)
         print("started")
-        logging.basicConfig(filename=time.ctime() + '.log', level=logging.DEBUG)
+        logging.basicConfig(filename="logs" + os.sep + time.ctime() + '.log', level=logging.DEBUG)
         logging.info("Started at" + time.ctime())
         for i in xrange(epochs):
             newbatch = self.dataHelper.getnextbatch(batchsize)
             if i % network.reportFrequency == 0 and i > 0:
                 results = self.session.run([self.accuracy, self.crossEntropy, self.learning_rate],feed_dict={self.input: newbatch.data, self.labels: newbatch.labels, self.dropoutRate: 1})
                 print(results)
+                if results[0] > 0.9 and results[0] > maxAcc:
+                    maxAcc = results[0]
+                    name = time.ctime()
+                    if not os.path.exists('models' + os.sep + name):
+                        os.makedirs('models' + os.sep + name)
+                    saver.save(self.session, 'models' + os.sep + name + os.sep + 'my-model' + str(counter))
+                    logging.info('saved with accuracy ' + str(results[0]) + ' at ' + name)
+                    counter += 1
             self.train_step.run(feed_dict={self.input: newbatch.data, self.labels: newbatch.labels, self.dropoutRate: 0.6})
         logging.info("Finished training at" + time.ctime())
         testdata = self.dataHelper.gettestdata()
@@ -89,7 +99,10 @@ class network:
             test_len += len(batch.data)
         finAcc = finAcc / test_len
         print(finAcc)
-        saver.save(self.session, 'my-model')
+        name = time.ctime()
+        if not os.path.exists('models' + os.sep + name):
+            os.makedirs('models' + os.sep + name)
+        saver.save(self.session, 'models' + os.sep + name + os.sep + 'my-model')
         logging.info("final accuracy %g" % finAcc)
         logging.info("Finished run at" + time.ctime())
 
